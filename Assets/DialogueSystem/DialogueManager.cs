@@ -4,141 +4,97 @@ using System.Collections;
 
 public class DialogueManager : MonoBehaviour
 {
-    private void Start()
-    {
-        Invoke(nameof(AutoTestDialogue), 2f);
-    }
-
-    private void AutoTestDialogue()
-    {
-        Debug.Log("🔥 АВТОТЕСТ ДИАЛОГА!");
-        DialogueAsset testAsset = Resources.Load<DialogueAsset>("cliff_intro");
-        if (testAsset != null)
-        {
-            Debug.Log($"✅ НАШЁЛ ДИАЛОГ: {testAsset.name}");
-            StartDialogue(testAsset);
-        }
-    }
-
     public static DialogueManager Instance { get; private set; }
 
     [Header("UI References")]
     public GameObject dialoguePanel;
-    public TMP_Text currentText;
-    // speakerText больше НЕ нужен!
+    public TMP_Text dialogueText;
 
     [Header("Настройки")]
     [Range(0.01f, 0.1f)]
-    public float textSpeed = 0.026f;  // БЫСТРО! 0.02 = 50 символов/сек
+    public float textSpeed = 0.026f;
 
     private DialogueAsset _currentDialogue;
     private int _currentLineIndex = 0;
     private bool _isTyping = false;
     private Coroutine _typingCoroutine;
 
+    // Колбэк — вызывается когда диалог полностью завершён
+    public System.Action OnDialogueEnd;
+
     private void Awake()
     {
-        if (Instance != null && Instance != this)
-        {
-            Destroy(gameObject);
-            return;
-        }
+        if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
     }
 
-    private void Update()
+    public void StartDialogue(DialogueAsset dialogue, System.Action onEnd = null)
     {
-        // ЛЮБАЯ КЛАВИША = следующая реплика
-        if (_isTyping && Input.anyKeyDown)
-        {
-            SkipTyping();
-        }
-    }
+        if (dialogue == null || dialogue.lines.Length == 0) return;
 
-    public void StartDialogue(DialogueAsset dialogue)
-    {
-        if (dialogue == null || dialogue.lines == null || dialogue.lines.Length == 0)
-        {
-            Debug.LogWarning("Пустой диалог!");
-            return;
-        }
-
+        StopAllCoroutines();
         _currentDialogue = dialogue;
         _currentLineIndex = 0;
+        OnDialogueEnd = onEnd;
+
         dialoguePanel.SetActive(true);
-        ShowNextLine();
+        ShowCurrentLine();
     }
 
-    public void StopDialogue()
+    private void ShowCurrentLine()
     {
-        dialoguePanel.SetActive(false);
-        if (_typingCoroutine != null)
+        if (_currentLineIndex >= _currentDialogue.lines.Length)
         {
-            StopCoroutine(_typingCoroutine);
-            _typingCoroutine = null;
-        }
-        _currentDialogue = null;
-        _currentLineIndex = 0;
-        _isTyping = false;
-    }
-
-    public void ShowNextLine()
-    {
-        // 🛑 ОСТАНАВЛИВАЕМ ЛЮБУЮ СТАРУЮ КОРУТИНУ
-        if (_typingCoroutine != null)
-        {
-            StopCoroutine(_typingCoroutine);
-            _typingCoroutine = null;
-            _isTyping = false;
-        }
-
-        if (_currentDialogue == null || _currentLineIndex >= _currentDialogue.lines.Length)
-        {
-            StopDialogue();
+            EndDialogue();
             return;
         }
 
         DialogueLine line = _currentDialogue.lines[_currentLineIndex];
-        _typingCoroutine = StartCoroutine(TypeText(line));
-        _currentLineIndex++;
+
+        if (_typingCoroutine != null) StopCoroutine(_typingCoroutine);
+        _typingCoroutine = StartCoroutine(TypeText(line.text));
     }
 
-    private IEnumerator TypeText(DialogueLine line)
+    private IEnumerator TypeText(string text)
     {
         _isTyping = true;
-        
-        currentText.text = "";
-        //currentText.color = line.speakerId.Contains("bad") ? Color.red : Color.cyan;
+        dialogueText.text = "";
 
-        string fullText = line.text;
-        
-        // 🎯 ФИКСИРОВАННАЯ СКОРОСТЬ: N символов за кадр
-        for (int i = 0; i < fullText.Length; i++)
+        foreach (char c in text)
         {
-            currentText.text = fullText.Substring(0, i + 1);
-            
-            // Ждём фиксированное время независимо от FPS
-            float timer = 0;
-            while (timer < textSpeed)
-            {
-                timer += Time.unscaledDeltaTime;  // НЕ зависит от timescale!
-                yield return null;  // 1 кадр
-            }
+            dialogueText.text += c;
+            yield return new WaitForSecondsRealtime(textSpeed);
         }
 
         _isTyping = false;
-        _typingCoroutine = null;
     }
-
-
-    public void SkipTyping()
+    public void Advance()
     {
-        if (_isTyping && _typingCoroutine != null)
+        if (!dialoguePanel.activeSelf) return;
+        if (_currentDialogue == null) return;
+
+        if (_isTyping)
         {
+            // Пропустить печать — показать весь текст сразу
             StopCoroutine(_typingCoroutine);
-            _typingCoroutine = null;
             _isTyping = false;
-            ShowNextLine();
+            dialogueText.text = _currentDialogue.lines[_currentLineIndex].text;
+        }
+        else
+        {
+            // Следующая реплика
+            _currentLineIndex++;
+            ShowCurrentLine();
         }
     }
+
+    private void EndDialogue()
+    {
+        dialoguePanel.SetActive(false);
+        _currentDialogue = null;
+        OnDialogueEnd?.Invoke();
+        OnDialogueEnd = null;
+    }
+
+    public bool IsActive() => dialoguePanel.activeSelf;
 }
