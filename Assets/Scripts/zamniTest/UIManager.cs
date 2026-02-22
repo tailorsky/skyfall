@@ -135,6 +135,12 @@ public class UIManager : MonoBehaviour
             }
         }
 
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            if (tutorialPanel != null && tutorialPanel.activeSelf)
+                CloseTutorial();
+        }
+
         SmoothStaminaSlider();
         UpdateHandIndicators();
         UpdateHeightText();
