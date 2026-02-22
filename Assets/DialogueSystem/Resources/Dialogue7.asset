@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 0}
+  m_Name: Dialogue7
+  m_EditorClassIdentifier: Assembly-CSharp::DialogueAsset
+  dialogueId: dia7
+  lines:
+  - speakerId: neutral
+    text: You wanted change, and you got it. Was it worth it? Will you continue to
+      want it? The choice is yours.
