@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+﻿﻿using UnityEngine;
 using System.Collections;
 using UnityEngine.InputSystem;
 
@@ -35,6 +35,9 @@ public class ClimbingManager : MonoBehaviour
     [Header("Walking Settings")]
     [SerializeField] private float walkSpeed = 5f;
     [SerializeField] private float gravity = -20f;
+
+    [Header("Slope Settings")]
+    [SerializeField] private float slideSpeedMultiplier = 0.1f;
 
     [Header("Jump Settings")]
     [SerializeField] private float jumpHeight = 1.5f;
@@ -1009,34 +1012,70 @@ public class ClimbingManager : MonoBehaviour
         if (keyboard.wKey.isPressed || keyboard.upArrowKey.isPressed) vertical = 1f;
         if (keyboard.sKey.isPressed || keyboard.downArrowKey.isPressed) vertical = -1f;
 
-        Vector3 forward = transform.forward;
-        Vector3 right = transform.right;
-        forward.y = 0f;
-        right.y = 0f;
-        forward.Normalize();
-        right.Normalize();
+        // ── СКОЛЬЖЕНИЕ ─────────────────────────────────────────
+        bool isSliding = false;
+        Vector3 slideVelocity = Vector3.zero;
 
-        Vector3 moveDir = (forward * vertical + right * horizontal);
+        RaycastHit slopeHit;
+        bool onSlope = Physics.SphereCast(
+            transform.position,
+            characterController.radius,
+            Vector3.down,
+            out slopeHit,
+            characterController.height / 2f + 0.2f,
+            groundLayer
+        );
 
-        if (moveDir.magnitude > 0.1f)
+        if (onSlope)
         {
-            moveDir.Normalize();
-            walkVelocity.x = moveDir.x * walkSpeed;
-            walkVelocity.z = moveDir.z * walkSpeed;
+            float slopeAngle = Vector3.Angle(slopeHit.normal, Vector3.up);
+            if (slopeAngle > characterController.slopeLimit)
+            {
+                isSliding = true;
+                Vector3 slideDir = Vector3.ProjectOnPlane(Vector3.down, slopeHit.normal).normalized;
+                float slideSpeed = walkSpeed * (slopeAngle / 45f) * slideSpeedMultiplier; // при 90° = walkSpeed*2
+                slideVelocity = slideDir * slideSpeed;
+            }
+        }
+        // ───────────────────────────────────────────────────────
+
+        if (isSliding)
+        {
+            // На крутом склоне — только скольжение, игрок не управляет
+            walkVelocity.x = slideVelocity.x;
+            walkVelocity.z = slideVelocity.z;
+            walkVelocity.y = slideVelocity.y;
         }
         else
         {
-            walkVelocity.x = 0f;
-            walkVelocity.z = 0f;
-        }
+            // Обычное движение
+            Vector3 forward = transform.forward;
+            Vector3 right = transform.right;
+            forward.y = 0f;
+            right.y = 0f;
+            forward.Normalize();
+            right.Normalize();
 
-        if (isGrounded && walkVelocity.y < 0f)
-        {
-            walkVelocity.y = -2f;
-        }
-        else
-        {
-            walkVelocity.y += gravity * Time.deltaTime;
+            Vector3 moveDir = forward * vertical + right * horizontal;
+
+            if (moveDir.magnitude > 0.1f)
+            {
+                moveDir.Normalize();
+                walkVelocity.x = moveDir.x * walkSpeed;
+                walkVelocity.z = moveDir.z * walkSpeed;
+            }
+            else
+            {
+                float drag = isGrounded ? 1f : 0.05f;
+                walkVelocity.x = Mathf.Lerp(walkVelocity.x, 0f, drag);
+                walkVelocity.z = Mathf.Lerp(walkVelocity.z, 0f, drag);
+            }
+
+            // Гравитация
+            if (isGrounded && walkVelocity.y < 0f)
+                walkVelocity.y = -2f;
+            else
+                walkVelocity.y += gravity * Time.deltaTime;
         }
 
         characterController.Move(walkVelocity * Time.deltaTime);

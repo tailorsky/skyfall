@@ -59,7 +59,6 @@ public class UIManager : MonoBehaviour
             Debug.LogError("[UI] ClimbingManager не найден!");
         }
         // Находим компоненты
-        staminaSystem = FindObjectOfType<StaminaSystem>();
         if (staminaSystem != null)
         {
             Debug.Log($"[UI] Нашёл StaminaSystem на объекте: {staminaSystem.gameObject.name}");
@@ -205,12 +204,12 @@ public class UIManager : MonoBehaviour
 
     private void OnCriticalStamina()
     {
-        ShowWarning("⚠ МАЛО СИЛ! ⚠");
+        ShowWarning("NOT ENOUGH STRENGTH!");
     }
 
     private void OnStaminaExhausted()
     {
-        ShowWarning("РУКИ УСТАЛИ!");
+        ShowWarning("MY HANDS ARE TIRED!");
     }
 
     // ─── РУКИ ───
@@ -240,11 +239,11 @@ public class UIManager : MonoBehaviour
         {
             float maxH = GameManager.Instance.WinHeight;
             float pct = Mathf.Clamp01(h / maxH) * 100f;
-            heightText.text = $"{h:F1}м ({pct:F0}%)";
+            heightText.text = $"{h:F1} meters";
         }
         else
         {
-            heightText.text = $"{h:F1}м";
+            heightText.text = $"{h:F1} meters";
         }
     }
 
