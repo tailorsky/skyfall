@@ -26,26 +26,20 @@ public class CameraController : MonoBehaviour
     [Header("Fall Effect")]
     [SerializeField] private float fallTiltAmount = 45f;
 
-    // Компоненты
     private StaminaSystem staminaSystem;
-
-    // Состояние камеры
     private float verticalRotation = 0f;
     private float horizontalRotation = 0f;
     private Vector3 baseLocalPosition;
 
-    // Для плавности
     private float swayX = 0f;
     private float swayY = 0f;
     private float fallRotation = 0f;
     private float stressLevel = 0f;
 
-    // Новый Input System
     private Vector2 mouseDelta;
 
     private void Start()
     {
-        // Блокируем и скрываем курсор
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
 
@@ -61,7 +55,6 @@ public class CameraController : MonoBehaviour
 
     private void Update()
     {
-        // Читаем мышь через новый Input System
         mouseDelta = Mouse.current.delta.ReadValue();
 
         if (GameManager.Instance.CurrentState == GameManager.GameState.Falling)
@@ -80,8 +73,6 @@ public class CameraController : MonoBehaviour
 
     private void HandleMouseLook()
     {
-        // Делим на 10 потому что новый Input System возвращает пиксели
-        // а не нормализованные значения как старый
         float mouseX = mouseDelta.x * mouseSensitivity * 0.1f;
         float mouseY = mouseDelta.y * mouseSensitivity * 0.1f;
 
@@ -163,7 +154,7 @@ public class CameraController : MonoBehaviour
 
     private void HandleCriticalStamina()
     {
-        Debug.Log("Камера: критическая стамина!");
+        Debug.Log("пїЅпїЅпїЅпїЅпїЅпїЅ: пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ!");
     }
 
     public void ResetLook()
