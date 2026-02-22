@@ -12,7 +12,13 @@ public class DialogueManager : MonoBehaviour
 
     [Header("Настройки")]
     [Range(0.01f, 0.1f)]
-    public float textSpeed = 0.026f;
+    public float textSpeed = 0.02f;
+
+    [Header("Звук печати")]
+    public AudioSource typingAudio;
+    public AudioClip typingSound;
+
+    private bool playSound = false;
 
     private DialogueAsset _currentDialogue;
     private int _currentLineIndex = 0;
@@ -63,10 +69,25 @@ public class DialogueManager : MonoBehaviour
         foreach (char c in text)
         {
             dialogueText.text += c;
+            
+            // Играем звук на каждый символ (кроме пробела)
+            if (c != '\0' && typingAudio != null && typingSound != null && playSound != true)
+            {
+                typingAudio.PlayOneShot(typingSound);
+                playSound = true;
+            }
+            
             yield return new WaitForSecondsRealtime(textSpeed);
         }
-
+        
+        Invoke(nameof(stopSound), 0.15f);
         _isTyping = false;
+        playSound = false;
+    }
+
+    private void stopSound()
+    {
+        typingAudio.Stop();
     }
     public void Advance()
     {
