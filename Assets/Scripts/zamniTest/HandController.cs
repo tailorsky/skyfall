@@ -11,10 +11,10 @@ public class HandController : MonoBehaviour
     [SerializeField] private float gripRadius = 0.5f;
     [SerializeField] private LayerMask climbableLayer;
 
-    [Header("Hand Animation Positions")]
-    [SerializeField] private Vector3 grippedLocalPosition = new Vector3(0, 0, 0);
-    [SerializeField] private Vector3 releasedLocalPosition = new Vector3(0, -0.2f, 0);
-    [SerializeField] private float handMoveSpeed = 8f;
+    [Header("Hand Position (относительно камеры)")]
+    [SerializeField] private Vector3 restLocalPosition = new Vector3(0.3f, -0.3f, 0.6f);
+    [SerializeField] private float followSpeed = 15f;
+    [SerializeField] private float returnSpeed = 8f;
 
     [Header("Visual Feedback")]
     [SerializeField] private Renderer handRenderer;
@@ -27,7 +27,7 @@ public class HandController : MonoBehaviour
     public HandSide Side => handSide;
 
     private Vector3 gripPoint;
-    private Vector3 targetLocalPosition;
+    private Vector3 gripWorldPosition;
 
     // События
     public event Action<HandController> OnGrip;
@@ -37,19 +37,32 @@ public class HandController : MonoBehaviour
     private float gripCooldown = 0.2f;
     private float lastGripTime = -1f;
 
-    // Камера — ищем сами надёжным способом
+    // Камера
     private Camera playerCamera;
+    private Transform cameraTransform;
 
     private void Awake()
     {
-        targetLocalPosition = releasedLocalPosition;
+        // Устанавливаем правильную позицию для левой/правой руки
+        if (handSide == HandSide.Left)
+        {
+            restLocalPosition = new Vector3(-0.4f, -0.3f, 0.6f);
+        }
+        else
+        {
+            restLocalPosition = new Vector3(0.4f, -0.3f, 0.6f);
+        }
     }
 
     private void Start()
     {
-        // Start надёжнее чем Awake для поиска камеры
-        // потому что к этому моменту все объекты уже созданы
         FindCamera();
+
+        // Сразу ставим руку на место
+        if (cameraTransform != null)
+        {
+            transform.position = GetRestWorldPosition();
+        }
     }
 
     private void FindCamera()
@@ -61,32 +74,29 @@ public class HandController : MonoBehaviour
         if (playerCamera == null)
         {
             playerCamera = GetComponentInParent<Camera>();
-            Debug.Log($"[{handSide}] Камера найдена через GetComponentInParent");
         }
 
         // Способ 3 — ищем вообще любую камеру на сцене
         if (playerCamera == null)
         {
             playerCamera = FindObjectOfType<Camera>();
-            Debug.Log($"[{handSide}] Камера найдена через FindObjectOfType");
         }
 
-        // Итог
         if (playerCamera != null)
         {
-            Debug.Log($"[{handSide}] Камера успешно найдена: {playerCamera.gameObject.name}");
+            cameraTransform = playerCamera.transform;
+            Debug.Log($"[{handSide}] Камера найдена: {playerCamera.gameObject.name}");
         }
         else
         {
-            Debug.LogError($"[{handSide}] КАМЕРА НЕ НАЙДЕНА ВООБЩЕ! " +
-                           $"Проверь что в сцене есть объект с компонентом Camera");
+            Debug.LogError($"[{handSide}] КАМЕРА НЕ НАЙДЕНА!");
         }
     }
 
     private void Update()
     {
         // Если камера пропала — пробуем найти снова
-        if (playerCamera == null)
+        if (playerCamera == null || cameraTransform == null)
         {
             FindCamera();
             return;
@@ -95,11 +105,67 @@ public class HandController : MonoBehaviour
         if (GameManager.Instance == null) return;
         if (GameManager.Instance.CurrentState != GameManager.GameState.Playing) return;
 
-        // Анимируем движение руки
-        transform.localPosition = Vector3.Lerp(
-            transform.localPosition,
-            targetLocalPosition,
-            Time.deltaTime * handMoveSpeed
+        if (IsGripped)
+        {
+            // Рука остаётся в точке захвата (мировые координаты)
+            StayAtGripPoint();
+        }
+        else
+        {
+            // Рука следует за камерой
+            FollowCamera();
+        }
+    }
+
+    private void LateUpdate()
+    {
+        // LateUpdate для более плавного следования за камерой
+        if (!IsGripped && cameraTransform != null)
+        {
+            // Дополнительное сглаживание после всех Update
+        }
+    }
+
+    /// <summary>
+    /// Рука следует за камерой (когда не зацеплена)
+    /// </summary>
+    private void FollowCamera()
+    {
+        Vector3 targetWorldPos = GetRestWorldPosition();
+
+        transform.position = Vector3.Lerp(
+            transform.position,
+            targetWorldPos,
+            Time.deltaTime * followSpeed
+        );
+
+        // Рука смотрит в том же направлении что и камера
+        transform.rotation = Quaternion.Lerp(
+            transform.rotation,
+            cameraTransform.rotation,
+            Time.deltaTime * followSpeed
+        );
+    }
+
+    /// <summary>
+    /// Получить мировую позицию руки "в покое" (перед камерой)
+    /// </summary>
+    private Vector3 GetRestWorldPosition()
+    {
+        // Конвертируем локальную позицию относительно камеры в мировую
+        return cameraTransform.TransformPoint(restLocalPosition);
+    }
+
+    /// <summary>
+    /// Рука остаётся в точке захвата (когда зацеплена)
+    /// </summary>
+    private void StayAtGripPoint()
+    {
+        // Плавно двигаемся к точке захвата (для красивой анимации)
+        transform.position = Vector3.Lerp(
+            transform.position,
+            gripWorldPosition,
+            Time.deltaTime * returnSpeed
         );
     }
 
@@ -108,13 +174,9 @@ public class HandController : MonoBehaviour
         if (IsGripped) return true;
         if (Time.time - lastGripTime < gripCooldown) return false;
 
-        // Проверяем камеру перед использованием
         if (playerCamera == null)
         {
-            Debug.LogError($"[{handSide}] TryGrip: камера null! Пробуем найти...");
             FindCamera();
-
-            // Если всё равно не нашли — выходим
             if (playerCamera == null)
             {
                 Debug.LogError($"[{handSide}] Камера не найдена, захват невозможен!");
@@ -135,18 +197,17 @@ public class HandController : MonoBehaviour
             playerCamera.transform.forward
         );
 
-        // Отладка — рисуем луч в Scene View
+        // Отладка
         Debug.DrawRay(ray.origin, ray.direction * reachDistance, Color.red, 1f);
-        Debug.Log($"[{handSide}] Луч из {ray.origin} вперёд на {reachDistance}м");
 
         RaycastHit hit;
         if (Physics.SphereCast(ray, gripRadius, out hit, reachDistance, climbableLayer))
         {
             // Нашли поверхность
             gripPoint = hit.point;
+            gripWorldPosition = hit.point;
             IsGripped = true;
             IsReaching = false;
-            targetLocalPosition = grippedLocalPosition;
 
             if (handRenderer != null && grippedMaterial != null)
                 handRenderer.material = grippedMaterial;
@@ -157,7 +218,6 @@ public class HandController : MonoBehaviour
         }
         else
         {
-            // Промах — выясняем почему
             IsReaching = false;
             OnGripFailed?.Invoke(this);
 
@@ -172,8 +232,7 @@ public class HandController : MonoBehaviour
             }
             else
             {
-                Debug.LogWarning($"[{handSide}] ПРОМАХ. Ничего нет перед камерой " +
-                    $"на расстоянии {reachDistance}м. Скала слишком далеко?");
+                Debug.LogWarning($"[{handSide}] ПРОМАХ. Ничего нет перед камерой.");
             }
 
             return false;
@@ -185,7 +244,6 @@ public class HandController : MonoBehaviour
         if (!IsGripped) return;
 
         IsGripped = false;
-        targetLocalPosition = releasedLocalPosition;
 
         if (handRenderer != null && releasedMaterial != null)
             handRenderer.material = releasedMaterial;
@@ -196,31 +254,41 @@ public class HandController : MonoBehaviour
 
     public Vector3 GetGripPoint() => gripPoint;
 
+    public LayerMask GetClimbableLayer() => climbableLayer;
+
+    /// <summary>
+    /// Установить позицию руки относительно камеры
+    /// </summary>
+    public void SetRestPosition(Vector3 localPos)
+    {
+        restLocalPosition = localPos;
+    }
+
     private void OnDrawGizmos()
     {
         if (playerCamera == null) return;
 
-        Gizmos.color = IsGripped ? Color.green : Color.red;
+        Gizmos.color = IsGripped ? Color.green : Color.yellow;
 
+        // Показываем позицию "в покое"
+        Vector3 restPos = playerCamera.transform.TransformPoint(restLocalPosition);
+        Gizmos.DrawWireSphere(restPos, 0.1f);
+
+        // Показываем луч захвата
         Vector3 offset = handSide == HandSide.Left
             ? -playerCamera.transform.right * 0.3f
             : playerCamera.transform.right * 0.3f;
 
         Vector3 start = playerCamera.transform.position + offset;
+        Gizmos.color = Color.red;
         Gizmos.DrawLine(start, start + playerCamera.transform.forward * reachDistance);
-        Gizmos.DrawWireSphere(
-            start + playerCamera.transform.forward * reachDistance,
-            gripRadius
-        );
+        Gizmos.DrawWireSphere(start + playerCamera.transform.forward * reachDistance, gripRadius);
 
+        // Показываем точку захвата
         if (IsGripped)
         {
             Gizmos.color = Color.green;
-            Gizmos.DrawSphere(gripPoint, 0.1f);
+            Gizmos.DrawSphere(gripPoint, 0.15f);
         }
-    }
-    public LayerMask GetClimbableLayer()
-    {
-        return climbableLayer;
     }
 }

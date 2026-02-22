@@ -6469,14 +6469,11 @@ GameObject:
   m_Component:
   - component: {fileID: 2026705593}
   - component: {fileID: 2026705595}
-  - component: {fileID: 2026705594}
   m_Layer: 0
   m_Name: Area Light (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
 --- !u!4 &2026705593
 Transform:
   m_ObjectHideFlags: 0
@@ -6770,9 +6767,21 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 7757122060112585599, guid: eb709232053280c4787e9399a9f24afa, type: 3}
+      propertyPath: m_ProbeAnchor
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 7757122060112585599, guid: eb709232053280c4787e9399a9f24afa, type: 3}
+      propertyPath: m_MotionVectors
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 8046186043828079562, guid: eb709232053280c4787e9399a9f24afa, type: 3}
       propertyPath: m_Name
       value: Player
+      objectReference: {fileID: 0}
+    - target: {fileID: 8211939271531540719, guid: eb709232053280c4787e9399a9f24afa, type: 3}
+      propertyPath: m_ProbeAnchor
+      value: 
       objectReference: {fileID: 0}
     - target: {fileID: 8870399787476366341, guid: eb709232053280c4787e9399a9f24afa, type: 3}
       propertyPath: cameraHolder
@@ -6782,10 +6791,15 @@ PrefabInstance:
       propertyPath: playerCamera
       value: 
       objectReference: {fileID: 1943071127}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 2277440933965292851, guid: eb709232053280c4787e9399a9f24afa, type: 3}
+    - {fileID: 6078059125666988361, guid: eb709232053280c4787e9399a9f24afa, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 9033131091807204423, guid: eb709232053280c4787e9399a9f24afa, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1492470047}
   m_SourcePrefab: {fileID: 100100000, guid: eb709232053280c4787e9399a9f24afa, type: 3}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
