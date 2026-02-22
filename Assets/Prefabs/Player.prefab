@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &4341772106203272107
+--- !u!1 &1295615672322638185
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -8,58 +8,29 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 5314255288148587976}
-  - component: {fileID: 8301940932817469900}
+  - component: {fileID: 3253759404185715354}
   m_Layer: 0
-  m_Name: PlayerCamera
-  m_TagString: MainCamera
+  m_Name: legs
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &5314255288148587976
+--- !u!4 &3253759404185715354
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4341772106203272107}
+  m_GameObject: {fileID: 1295615672322638185}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1.7, z: 0}
+  m_LocalPosition: {x: 0, y: -1.54, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 850507643726032550}
-  - {fileID: 1785995802716424586}
-  - {fileID: 4882656299341653348}
+  m_Children: []
   m_Father: {fileID: 6417697437628082548}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &8301940932817469900
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4341772106203272107}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7ede7320b21956d46aac761d7d8568e2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CameraController
-  mouseSensitivity: 2
-  verticalClampMin: -70
-  verticalClampMax: 80
-  horizontalClampMin: -60
-  horizontalClampMax: 60
-  enableSway: 1
-  swayAmount: 0.5
-  swayReturnSpeed: 3
-  enableBreathing: 1
-  breathingAmount: 0.03
-  breathingSpeed: 1
-  stressShakeIntensity: 0.02
-  fallTiltAmount: 45
 --- !u!1 &4606505324912955951
 GameObject:
   m_ObjectHideFlags: 0
@@ -72,6 +43,7 @@ GameObject:
   - component: {fileID: 5509205851971383939}
   - component: {fileID: 7929365141512060588}
   - component: {fileID: 4873302182078858654}
+  - component: {fileID: 3020357471518055610}
   m_Layer: 0
   m_Name: Camera
   m_TagString: Untagged
@@ -87,12 +59,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4606505324912955951}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 1.699997, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 5314255288148587976}
+  m_Father: {fileID: 6417697437628082548}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!20 &5509205851971383939
 Camera:
@@ -103,7 +75,7 @@ Camera:
   m_GameObject: {fileID: 4606505324912955951}
   m_Enabled: 1
   serializedVersion: 2
-  m_ClearFlags: 1
+  m_ClearFlags: 4
   m_BackGroundColor: {r: 0.19215687, g: 0.3019608, b: 0.4745098, a: 0}
   m_projectionMatrixMode: 1
   m_GateFitMode: 2
@@ -197,6 +169,31 @@ MonoBehaviour:
     m_VarianceClampScale: 0.9
     m_ContrastAdaptiveSharpening: 0
   m_Version: 2
+--- !u!114 &3020357471518055610
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4606505324912955951}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7ede7320b21956d46aac761d7d8568e2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CameraController
+  mouseSensitivity: 2
+  verticalClampMin: -70
+  verticalClampMax: 80
+  horizontalClampMin: -60
+  horizontalClampMax: 60
+  enableSway: 1
+  swayAmount: 0.5
+  swayReturnSpeed: 3
+  enableBreathing: 1
+  breathingAmount: 0.03
+  breathingSpeed: 1
+  stressShakeIntensity: 0.02
+  fallTiltAmount: 45
 --- !u!1 &5148955215173145786
 GameObject:
   m_ObjectHideFlags: 0
@@ -210,6 +207,7 @@ GameObject:
   - component: {fileID: 7757122060112585599}
   - component: {fileID: 8661515141095485485}
   - component: {fileID: 934904807121660044}
+  - component: {fileID: 2277440933965292851}
   m_Layer: 0
   m_Name: RightHand
   m_TagString: Untagged
@@ -226,11 +224,11 @@ Transform:
   m_GameObject: {fileID: 5148955215173145786}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.3, y: -0.29999995, z: 0.5}
+  m_LocalPosition: {x: 0.30000305, y: 1.3999939, z: 0.5}
   m_LocalScale: {x: 0.08, y: 0.08, z: 0.25}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 5314255288148587976}
+  m_Father: {fileID: 6417697437628082548}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!33 &800361356292431412
 MeshFilter:
@@ -334,6 +332,30 @@ MonoBehaviour:
   handRenderer: {fileID: 0}
   grippedMaterial: {fileID: 0}
   releasedMaterial: {fileID: 0}
+--- !u!114 &2277440933965292851
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5148955215173145786}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4ad89a564c9126f48a626f9eceff1d27, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HandController
+  handSide: 0
+  reachDistance: 3
+  gripRadius: 0.5
+  climbableLayer:
+    serializedVersion: 2
+    m_Bits: 0
+  grippedLocalPosition: {x: 0, y: 0, z: 0}
+  releasedLocalPosition: {x: 0, y: -0.2, z: 0}
+  handMoveSpeed: 8
+  handRenderer: {fileID: 0}
+  grippedMaterial: {fileID: 0}
+  releasedMaterial: {fileID: 0}
 --- !u!1 &8046186043828079562
 GameObject:
   m_ObjectHideFlags: 0
@@ -343,13 +365,14 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6417697437628082548}
-  - component: {fileID: 870613150283864607}
   - component: {fileID: 9174489493103233282}
-  - component: {fileID: 8870399787476366341}
-  - component: {fileID: 1272734094966444804}
+  - component: {fileID: 2459930157803600466}
+  - component: {fileID: 6341775358755979209}
+  - component: {fileID: 1623556059404307147}
+  - component: {fileID: 2156144335728007770}
   m_Layer: 0
   m_Name: Player
-  m_TagString: Untagged
+  m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -363,29 +386,16 @@ Transform:
   m_GameObject: {fileID: 8046186043828079562}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 2, z: 3}
+  m_LocalPosition: {x: 151.74715, y: 251.97, z: 123.407394}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 5314255288148587976}
+  - {fileID: 850507643726032550}
+  - {fileID: 1785995802716424586}
+  - {fileID: 4882656299341653348}
+  - {fileID: 3253759404185715354}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &870613150283864607
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8046186043828079562}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5810bc0fe863cc843b08dc80e7e9cd6d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::StaminaSystem
-  maxStamina: 100
-  staminaRecoveryRate: 15
-  staminaDrainOneHand: 8
-  criticalStaminaThreshold: 25
 --- !u!143 &9174489493103233282
 CharacterController:
   m_ObjectHideFlags: 0
@@ -411,7 +421,23 @@ CharacterController:
   m_SkinWidth: 0.01
   m_MinMoveDistance: 0
   m_Center: {x: 0, y: 0, z: 0}
---- !u!114 &8870399787476366341
+--- !u!114 &2459930157803600466
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8046186043828079562}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5810bc0fe863cc843b08dc80e7e9cd6d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::StaminaSystem
+  maxStamina: 100
+  staminaRecoveryRate: 15
+  staminaDrainOneHand: 8
+  criticalStaminaThreshold: 25
+--- !u!114 &6341775358755979209
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -426,7 +452,7 @@ MonoBehaviour:
   maxReachDistance: 1.5
   leftHand: {fileID: 2441190565410317817}
   rightHand: {fileID: 934904807121660044}
-  playerCamera: {fileID: 0}
+  playerCamera: {fileID: 5509205851971383939}
   cameraHolder: {fileID: 0}
   pullUpSpeed: 4
   pullUpOffset: 0.8
@@ -450,19 +476,19 @@ MonoBehaviour:
   mantleUpOffset: 0.5
   mantleSurfaceLayer:
     serializedVersion: 2
-    m_Bits: 0
-  groundCheck: {fileID: 0}
+    m_Bits: 512
+  groundCheck: {fileID: 3253759404185715354}
   groundCheckRadius: 0.3
   groundLayer:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 512
   noGripGracePeriod: 0.5
   showDebugInfo: 1
   showMantleDebug: 1
   normalFOV: 60
   maxFallFOV: 80
   fovChangeSpeed: 3
---- !u!114 &1272734094966444804
+--- !u!114 &1623556059404307147
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -477,12 +503,28 @@ MonoBehaviour:
   lethalFallDistance: 2.5
   safeFallDistance: 1
   stunDuration: 0.5
-  canMoveWhileStunned: 0
+  canMoveWhileStunned: 1
   landingSoftSound: {fileID: 0}
   landingHardSound: {fileID: 0}
   deathFallSound: {fileID: 0}
   landingDustParticles: {fileID: 0}
   showDebugInfo: 1
+--- !u!114 &2156144335728007770
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8046186043828079562}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5810bc0fe863cc843b08dc80e7e9cd6d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::StaminaSystem
+  maxStamina: 100
+  staminaRecoveryRate: 15
+  staminaDrainOneHand: 8
+  criticalStaminaThreshold: 25
 --- !u!1 &9033131091807204423
 GameObject:
   m_ObjectHideFlags: 0
@@ -496,6 +538,7 @@ GameObject:
   - component: {fileID: 8211939271531540719}
   - component: {fileID: 6451345717746782890}
   - component: {fileID: 2441190565410317817}
+  - component: {fileID: 6078059125666988361}
   m_Layer: 0
   m_Name: LeftHand
   m_TagString: Untagged
@@ -512,11 +555,11 @@ Transform:
   m_GameObject: {fileID: 9033131091807204423}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0.3, y: -0.29999995, z: 0.5}
+  m_LocalPosition: {x: -0.30000305, y: 1.3999939, z: 0.5}
   m_LocalScale: {x: 0.08, y: 0.08, z: 0.25}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 5314255288148587976}
+  m_Father: {fileID: 6417697437628082548}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!33 &6018720517775919639
 MeshFilter:
@@ -614,6 +657,30 @@ MonoBehaviour:
   climbableLayer:
     serializedVersion: 2
     m_Bits: 64
+  grippedLocalPosition: {x: 0, y: 0, z: 0}
+  releasedLocalPosition: {x: 0, y: -0.2, z: 0}
+  handMoveSpeed: 8
+  handRenderer: {fileID: 0}
+  grippedMaterial: {fileID: 0}
+  releasedMaterial: {fileID: 0}
+--- !u!114 &6078059125666988361
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9033131091807204423}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4ad89a564c9126f48a626f9eceff1d27, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HandController
+  handSide: 0
+  reachDistance: 3
+  gripRadius: 0.5
+  climbableLayer:
+    serializedVersion: 2
+    m_Bits: 0
   grippedLocalPosition: {x: 0, y: 0, z: 0}
   releasedLocalPosition: {x: 0, y: -0.2, z: 0}
   handMoveSpeed: 8

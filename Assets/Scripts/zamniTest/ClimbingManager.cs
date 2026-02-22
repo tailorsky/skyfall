@@ -638,17 +638,20 @@ public class ClimbingManager : MonoBehaviour
 
         Vector2 mouseDelta = mouse.delta.ReadValue();
 
+        // Горизонтальный поворот (персонаж)
         rotationY += mouseDelta.x * mouseSensitivity * 0.1f;
 
+        // Вертикальный поворот (камера)
         float mouseY = mouseDelta.y * mouseSensitivity * 0.1f;
         if (!invertMouseY) mouseY = -mouseY;
         rotationX += mouseY;
-
         rotationX = Mathf.Clamp(rotationX, -maxLookUpAngle, maxLookDownAngle);
 
-        transform.localRotation = Quaternion.Euler(0f, rotationY, 0f);
+        // ВАЖНО: используем rotation, не localRotation!
+        transform.rotation = Quaternion.Euler(0f, rotationY, 0f);
         playerCamera.transform.localRotation = Quaternion.Euler(rotationX, 0f, 0f);
     }
+
 
     // ─────────────────────────────────────────
     //  ПРЫЖОК
@@ -698,12 +701,19 @@ public class ClimbingManager : MonoBehaviour
         }
     }
 
+
+    // ─────────────────────────────────────────
+    //  ХОДЬБА
+    // ─────────────────────────────────────────
+
     private void HandleWalking()
     {
         UpdateFallFOV(false);
+
         var keyboard = Keyboard.current;
         if (keyboard == null) return;
 
+        // Получаем ввод
         float horizontal = 0f;
         float vertical = 0f;
 
@@ -712,13 +722,24 @@ public class ClimbingManager : MonoBehaviour
         if (keyboard.wKey.isPressed || keyboard.upArrowKey.isPressed) vertical = 1f;
         if (keyboard.sKey.isPressed || keyboard.downArrowKey.isPressed) vertical = -1f;
 
-        Vector3 inputDir = new Vector3(horizontal, 0f, vertical);
+        // ═══════════════════════════════════════════════════
+        // ИСПРАВЛЕНИЕ: Используем transform.forward/right напрямую
+        // ═══════════════════════════════════════════════════
 
-        if (inputDir.magnitude > 0.1f)
+        // Получаем направления персонажа (без Y компонента)
+        Vector3 forward = transform.forward;
+        Vector3 right = transform.right;
+        forward.y = 0f;
+        right.y = 0f;
+        forward.Normalize();
+        right.Normalize();
+
+        // Вычисляем направление движения
+        Vector3 moveDir = (forward * vertical + right * horizontal);
+
+        if (moveDir.magnitude > 0.1f)
         {
-            inputDir.Normalize();
-            Vector3 moveDir = Quaternion.Euler(0f, rotationY, 0f) * inputDir;
-
+            moveDir.Normalize();
             walkVelocity.x = moveDir.x * walkSpeed;
             walkVelocity.z = moveDir.z * walkSpeed;
         }
@@ -728,6 +749,7 @@ public class ClimbingManager : MonoBehaviour
             walkVelocity.z = 0f;
         }
 
+        // Гравитация
         if (isGrounded && walkVelocity.y < 0f)
         {
             walkVelocity.y = -2f;
@@ -737,7 +759,14 @@ public class ClimbingManager : MonoBehaviour
             walkVelocity.y += gravity * Time.deltaTime;
         }
 
+        // Двигаем персонажа
         characterController.Move(walkVelocity * Time.deltaTime);
+
+        // Debug
+        if (showDebugInfo && moveDir.magnitude > 0.1f)
+        {
+            Debug.Log($"RotY: {rotationY:F1}° | Forward: {forward} | MoveDir: {moveDir}");
+        }
     }
 
     // ─────────────────────────────────────────
@@ -781,7 +810,12 @@ public class ClimbingManager : MonoBehaviour
 
         if (Mathf.Abs(horizontal) < 0.1f) return;
 
-        Vector3 moveDir = Quaternion.Euler(0f, rotationY, 0f) * Vector3.right * horizontal;
+        // Используем transform.right напрямую
+        Vector3 right = transform.right;
+        right.y = 0f;
+        right.Normalize();
+
+        Vector3 moveDir = right * horizontal;
 
         // Проверяем есть ли скала в направлении движения
         if (!HasClimbableSurfaceInDirection(moveDir))
