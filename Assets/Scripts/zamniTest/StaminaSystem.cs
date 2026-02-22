@@ -5,20 +5,30 @@ public class StaminaSystem : MonoBehaviour
 {
     [Header("Stamina Settings")]
     [SerializeField] private float maxStamina = 100f;
-    [SerializeField] private float staminaRecoveryRate = 15f;   // В сек при двух руках
-    [SerializeField] private float staminaDrainOneHand = 8f;    // В сек при одной руке
-    [SerializeField] private float staminaDrainNoHands = 50f;   // В сек без рук (быстро падает)
+    [SerializeField] private float staminaRecoveryRate = 15f;  // восстановление при 2 руках
+    [SerializeField] private float staminaDrainOneHand = 8f;   // расход при 1 руке
     [SerializeField] private float criticalStaminaThreshold = 25f;
 
     private float currentStamina;
-    private int handsGripped = 2; // Начинаем как будто держимся двумя руками
-    private bool climbingStarted = false; // Флаг что лазание началось
+    private int handsGripped = 0;
 
+    // Режим в котором находится игрок
+    public enum StaminaMode
+    {
+        Idle,       // на земле — стамина не трогается вообще
+        Recovering, // 2 руки на скале — восстанавливается
+        Draining,   // 1 рука на скале — тратится
+    }
+
+    private StaminaMode currentMode = StaminaMode.Idle;
+
+    // Геттеры
     public float CurrentStamina => currentStamina;
     public float MaxStamina => maxStamina;
     public float StaminaPercent => currentStamina / maxStamina;
     public bool IsCritical => currentStamina <= criticalStaminaThreshold;
     public bool IsExhausted => currentStamina <= 0f;
+    public StaminaMode CurrentMode => currentMode;
 
     // События
     public event Action OnStaminaExhausted;
@@ -31,10 +41,13 @@ public class StaminaSystem : MonoBehaviour
     private void Start()
     {
         currentStamina = maxStamina;
+        // Начинаем в Idle — человек на земле
+        SetMode(StaminaMode.Idle);
     }
 
     private void Update()
     {
+        if (GameManager.Instance == null) return;
         if (GameManager.Instance.CurrentState != GameManager.GameState.Playing) return;
 
         UpdateStamina();
@@ -42,82 +55,110 @@ public class StaminaSystem : MonoBehaviour
 
     private void UpdateStamina()
     {
-        // Пока игрок не начал лазать — стамина не тратится
-        if (!climbingStarted)
-        {
-            // Проверяем не начал ли игрок
-            if (handsGripped < 2)
-            {
-                // Только если хоть раз зацепился
-                climbingStarted = true;
-            }
-            else
-            {
-                return; // Ещё не начали, ничего не делаем
-            }
-        }
-
         float previousStamina = currentStamina;
 
-        switch (handsGripped)
+        switch (currentMode)
         {
-            case 2:
+            case StaminaMode.Idle:
                 currentStamina += staminaRecoveryRate * Time.deltaTime;
-                currentStamina = Mathf.Clamp(currentStamina, 0f, maxStamina);
-                criticalEventFired = false;
-                exhaustedEventFired = false;
+                currentStamina = Mathf.Min(currentStamina, maxStamina);
+
+                // Сбрасываем флаги когда стамина восстановилась
+                if (!IsCritical) criticalEventFired = false;
+                if (!IsExhausted) exhaustedEventFired = false;
+                return;
+
+            case StaminaMode.Recovering:
+                // Две руки на скале — восстанавливаем
+                currentStamina += staminaRecoveryRate * Time.deltaTime;
+                currentStamina = Mathf.Min(currentStamina, maxStamina);
+
+                // Сбрасываем флаги когда стамина восстановилась
+                if (!IsCritical) criticalEventFired = false;
+                if (!IsExhausted) exhaustedEventFired = false;
                 break;
 
-            case 1:
+            case StaminaMode.Draining:
+                // Одна рука — тратим
                 currentStamina -= staminaDrainOneHand * Time.deltaTime;
-                currentStamina = Mathf.Clamp(currentStamina, 0f, maxStamina);
-                break;
-
-            case 0:
-                currentStamina -= staminaDrainNoHands * Time.deltaTime;
-                currentStamina = Mathf.Clamp(currentStamina, 0f, maxStamina);
+                currentStamina = Mathf.Max(currentStamina, 0f);
                 break;
         }
 
+        // Уведомляем об изменении
         if (Mathf.Abs(previousStamina - currentStamina) > 0.01f)
         {
             OnStaminaChanged?.Invoke(StaminaPercent);
         }
 
+        // Критический уровень
         if (IsCritical && !criticalEventFired)
         {
             criticalEventFired = true;
             OnCriticalStamina?.Invoke();
+            Debug.Log("Критически мало сил!");
         }
 
+        // Стамина кончилась
         if (IsExhausted && !exhaustedEventFired)
         {
             exhaustedEventFired = true;
             OnStaminaExhausted?.Invoke();
+            Debug.Log("Стамина на нуле — руки срываются!");
         }
     }
 
-    // И МЕНЯЕМ SetHandsGripped:
-    public void SetHandsGripped(int count)
+    // Этот метод вызывается из ClimbingManager
+    public void SetHandsGripped(int count, bool isOnGround)
     {
         handsGripped = Mathf.Clamp(count, 0, 2);
 
-        // Как только игрок взялся — лазание началось
-        if (count > 0)
+        // Определяем режим
+        if (isOnGround && count == 0)
         {
-            climbingStarted = true;
+            // Стоим на земле и не держимся — Idle
+            SetMode(StaminaMode.Idle);
         }
+        else if (count == 2)
+        {
+            // Две руки — восстановление
+            SetMode(StaminaMode.Recovering);
+        }
+        else if (count == 1)
+        {
+            // Одна рука — расход
+            SetMode(StaminaMode.Draining);
+        }
+        else
+        {
+            // 0 рук в воздухе — тоже Idle (падение обрабатывается отдельно)
+            SetMode(StaminaMode.Idle);
+        }
+    }
+
+    private void SetMode(StaminaMode newMode)
+    {
+        if (currentMode == newMode) return;
+
+        currentMode = newMode;
+        Debug.Log($"Стамина режим: {newMode}");
+    }
+
+    // Старый метод оставляем для совместимости
+    public void SetHandsGripped(int count)
+    {
+        SetHandsGripped(count, false);
     }
 
     public void RestoreStamina(float amount)
     {
-        currentStamina = Mathf.Clamp(currentStamina + amount, 0f, maxStamina);
+        currentStamina = Mathf.Min(currentStamina + amount, maxStamina);
         OnStaminaChanged?.Invoke(StaminaPercent);
     }
 
     public void DrainStamina(float amount)
     {
-        currentStamina = Mathf.Clamp(currentStamina - amount, 0f, maxStamina);
+        currentStamina = Mathf.Max(currentStamina - amount, 0f);
         OnStaminaChanged?.Invoke(StaminaPercent);
     }
 }
