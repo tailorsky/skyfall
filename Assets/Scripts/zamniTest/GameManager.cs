@@ -6,13 +6,7 @@ public class GameManager : MonoBehaviour
 {
     public static GameManager Instance { get; private set; }
 
-    public enum GameState
-    {
-        Playing,
-        Falling,
-        GameOver,
-        Win
-    }
+    public enum GameState { Playing, Falling, GameOver, Win }
 
     [Header("Settings")]
     [SerializeField] private float fallDuration = 2f;
@@ -21,27 +15,17 @@ public class GameManager : MonoBehaviour
     public GameState CurrentState { get; private set; }
     public float WinHeight => winHeight;
 
-    // События
     public event Action OnGameOver;
     public event Action OnWin;
     public event Action OnRestart;
 
     private void Awake()
     {
-        if (Instance == null)
-        {
-            Instance = this;
-        }
-        else
-        {
-            Destroy(gameObject);
-        }
+        if (Instance == null) Instance = this;
+        else Destroy(gameObject);
     }
 
-    private void Start()
-    {
-        StartGame();
-    }
+    private void Start() => StartGame();
 
     public void StartGame()
     {
@@ -51,12 +35,8 @@ public class GameManager : MonoBehaviour
 
     public void TriggerGameOver()
     {
-        if (CurrentState == GameState.GameOver) return;
-
+        if (CurrentState == GameState.GameOver || CurrentState == GameState.Falling) return;
         CurrentState = GameState.Falling;
-        Debug.Log("ПАДЕНИЕ! Игра окончена.");
-
-        // Запускаем анимацию падения
         StartCoroutine(FallRoutine());
     }
 
@@ -70,10 +50,9 @@ public class GameManager : MonoBehaviour
     public void TriggerWin()
     {
         if (CurrentState == GameState.Win) return;
-
         CurrentState = GameState.Win;
         OnWin?.Invoke();
-        Debug.Log("ПОБЕДА! Вершина достигнута!");
+        Debug.Log("[GameManager] WIN!");
     }
 
     public void RestartGame()

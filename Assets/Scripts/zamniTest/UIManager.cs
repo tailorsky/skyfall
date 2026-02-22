@@ -212,6 +212,22 @@ public class UIManager : MonoBehaviour
         ShowWarning("MY HANDS ARE TIRED!");
     }
 
+    public void OnRestartButton()
+    {
+        Debug.Log("ВСЁ НАХУЙ!");
+        Time.timeScale = 1f; // Сбрасываем паузу если была
+        GameManager.Instance?.RestartGame();
+    }
+
+    public void OnQuitButton()
+    {
+        #if UNITY_EDITOR
+            UnityEditor.EditorApplication.isPlaying = false;
+        #else
+            Application.Quit();
+        #endif
+    }
+
     // ─── РУКИ ───
 
     private void UpdateHandIndicators()
@@ -308,11 +324,6 @@ public class UIManager : MonoBehaviour
         if (winPanel != null) winPanel.SetActive(true);
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
-    }
-
-    public void OnRestartButton()
-    {
-        GameManager.Instance?.RestartGame();
     }
 
     private void OnDestroy()
