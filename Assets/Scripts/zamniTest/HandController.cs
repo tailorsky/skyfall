@@ -34,6 +34,7 @@ public class HandController : MonoBehaviour
 
     private float gripCooldown = 0.2f;
     private float lastGripTime = -1f;
+    
     [Header ("ЗАЦЕП")]
     [SerializeField] private Transform gripAnchor;
 
