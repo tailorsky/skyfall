@@ -219,4 +219,8 @@ public class HandController : MonoBehaviour
             Gizmos.DrawSphere(gripPoint, 0.1f);
         }
     }
+    public LayerMask GetClimbableLayer()
+    {
+        return climbableLayer;
+    }
 }
