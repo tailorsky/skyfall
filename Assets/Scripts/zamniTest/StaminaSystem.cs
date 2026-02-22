@@ -3,157 +3,134 @@ using System;
 
 public class StaminaSystem : MonoBehaviour
 {
-    [Header("Stamina Settings")]
+    [Header("Settings")]
     [SerializeField] private float maxStamina = 100f;
-    [SerializeField] private float staminaRecoveryRate = 15f;  // восстановление при 2 руках
-    [SerializeField] private float staminaDrainOneHand = 8f;   // расход при 1 руке
-    [SerializeField] private float criticalStaminaThreshold = 25f;
+    [SerializeField] private float drainTwoHands = 2f;   // расход при двух руках
+    [SerializeField] private float drainOneHand = 6f;  // расход при одной руке
+    [SerializeField] private float recoveryRate = 14f;  // восстановление на земле
+    [SerializeField] private float criticalThreshold = 25f;
+
+    [Header("Debug")]
+    [SerializeField] private bool showDebugInfo = true;
 
     private float currentStamina;
-    private int handsGripped = 0;
 
-    // –ежим в котором находитс€ игрок
-    public enum StaminaMode
-    {
-        Idle,       // на земле Ч стамина не трогаетс€ вообще
-        Recovering, // 2 руки на скале Ч восстанавливаетс€
-        Draining,   // 1 рука на скале Ч тратитс€
-    }
-
+    public enum StaminaMode { Idle, TwoHands, OneHand }
     private StaminaMode currentMode = StaminaMode.Idle;
 
     // √еттеры
     public float CurrentStamina => currentStamina;
     public float MaxStamina => maxStamina;
     public float StaminaPercent => currentStamina / maxStamina;
-    public bool IsCritical => currentStamina <= criticalStaminaThreshold;
+    public bool IsCritical => currentStamina <= criticalThreshold;
     public bool IsExhausted => currentStamina <= 0f;
     public StaminaMode CurrentMode => currentMode;
 
-    // —обыти€
-    public event Action OnStaminaExhausted;
+    // ќƒЌќ событие Ч просто float от 0 до 1
     public event Action<float> OnStaminaChanged;
     public event Action OnCriticalStamina;
+    public event Action OnStaminaExhausted;
 
-    private bool criticalEventFired = false;
-    private bool exhaustedEventFired = false;
+    private bool criticalFired = false;
+    private bool exhaustedFired = false;
+
+    private void Awake()
+    {
+        currentStamina = maxStamina;
+    }
 
     private void Start()
     {
-        currentStamina = maxStamina;
-        // Ќачинаем в Idle Ч человек на земле
-        SetMode(StaminaMode.Idle);
+        // —разу обновл€ем UI
+        OnStaminaChanged?.Invoke(StaminaPercent);
+        Debug.Log($"[Stamina] —тарт: {currentStamina:F0}/{maxStamina}");
     }
 
     private void Update()
     {
-        if (GameManager.Instance == null) return;
-        if (GameManager.Instance.CurrentState != GameManager.GameState.Playing) return;
+        Debug.Log($"[Stamina Update] mode={currentMode} stamina={currentStamina:F1}");
+        if (GameManager.Instance != null &&
+            GameManager.Instance.CurrentState != GameManager.GameState.Playing)
+            return;
 
-        UpdateStamina();
-    }
-
-    private void UpdateStamina()
-    {
-        float previousStamina = currentStamina;
+        float prev = currentStamina;
 
         switch (currentMode)
         {
             case StaminaMode.Idle:
-                currentStamina += staminaRecoveryRate * Time.deltaTime;
+                // Ќа земле Ч восстанавливаем
+                currentStamina += recoveryRate * Time.deltaTime;
                 currentStamina = Mathf.Min(currentStamina, maxStamina);
-
-                // —брасываем флаги когда стамина восстановилась
-                if (!IsCritical) criticalEventFired = false;
-                if (!IsExhausted) exhaustedEventFired = false;
-                return;
-
-            case StaminaMode.Recovering:
-                // ƒве руки на скале Ч восстанавливаем
-                currentStamina += staminaRecoveryRate * Time.deltaTime;
-                currentStamina = Mathf.Min(currentStamina, maxStamina);
-
-                // —брасываем флаги когда стамина восстановилась
-                if (!IsCritical) criticalEventFired = false;
-                if (!IsExhausted) exhaustedEventFired = false;
+                if (!IsCritical) criticalFired = false;
+                if (!IsExhausted) exhaustedFired = false;
                 break;
 
-            case StaminaMode.Draining:
-                // ќдна рука Ч тратим
-                currentStamina -= staminaDrainOneHand * Time.deltaTime;
+            case StaminaMode.TwoHands:
+                // ƒве руки Ч медленный расход
+                currentStamina -= drainTwoHands * Time.deltaTime;
+                currentStamina = Mathf.Max(currentStamina, 0f);
+                break;
+
+            case StaminaMode.OneHand:
+                // ќдна рука Ч быстрый расход
+                currentStamina -= drainOneHand * Time.deltaTime;
                 currentStamina = Mathf.Max(currentStamina, 0f);
                 break;
         }
 
-        // ”ведомл€ем об изменении
-        if (Mathf.Abs(previousStamina - currentStamina) > 0.01f)
+        // Ћогируем каждые 30 кадров
+        if (showDebugInfo && Time.frameCount % 30 == 0)
+        {
+            Debug.Log($"[Stamina] {currentMode} | " +
+                      $"{currentStamina:F1}/{maxStamina} | " +
+                      $"{StaminaPercent * 100:F0}%");
+        }
+
+        // ”ведомл€ем UI если изменилось
+        if (Mathf.Abs(prev - currentStamina) > 0.05f)
         {
             OnStaminaChanged?.Invoke(StaminaPercent);
         }
 
         //  ритический уровень
-        if (IsCritical && !criticalEventFired)
+        if (IsCritical && !criticalFired)
         {
-            criticalEventFired = true;
+            criticalFired = true;
             OnCriticalStamina?.Invoke();
-            Debug.Log(" ритически мало сил!");
+            Debug.Log("[Stamina]  –»“»„≈— »… ”–ќ¬≈Ќ№!");
         }
 
-        // —тамина кончилась
-        if (IsExhausted && !exhaustedEventFired)
+        // »стощение
+        if (IsExhausted && !exhaustedFired)
         {
-            exhaustedEventFired = true;
+            exhaustedFired = true;
             OnStaminaExhausted?.Invoke();
-            Debug.Log("—тамина на нуле Ч руки срываютс€!");
+            Debug.Log("[Stamina] —“јћ»Ќј  ќЌ„»Ћј—№!");
         }
     }
 
-    // Ётот метод вызываетс€ из ClimbingManager
     public void SetHandsGripped(int count, bool isOnGround)
     {
-        handsGripped = Mathf.Clamp(count, 0, 2);
+        StaminaMode newMode;
 
-        // ќпредел€ем режим
         if (isOnGround && count == 0)
-        {
-            // —тоим на земле и не держимс€ Ч Idle
-            SetMode(StaminaMode.Idle);
-        }
+            newMode = StaminaMode.Idle;
         else if (count == 2)
-        {
-            // ƒве руки Ч восстановление
-            SetMode(StaminaMode.Recovering);
-        }
+            newMode = StaminaMode.TwoHands;
         else if (count == 1)
-        {
-            // ќдна рука Ч расход
-            SetMode(StaminaMode.Draining);
-        }
+            newMode = StaminaMode.OneHand;
         else
-        {
-            // 0 рук в воздухе Ч тоже Idle (падение обрабатываетс€ отдельно)
-            SetMode(StaminaMode.Idle);
-        }
-    }
+            newMode = StaminaMode.Idle;
 
-    private void SetMode(StaminaMode newMode)
-    {
-        if (currentMode == newMode) return;
+        if (newMode == currentMode) return;
 
         currentMode = newMode;
-        Debug.Log($"—тамина режим: {newMode}");
+        Debug.Log($"[Stamina] –ежим: {currentMode} | —тамина: {currentStamina:F1}");
     }
 
-    // —тарый метод оставл€ем дл€ совместимости
     public void SetHandsGripped(int count)
     {
         SetHandsGripped(count, false);
-    }
-
-    public void RestoreStamina(float amount)
-    {
-        currentStamina = Mathf.Min(currentStamina + amount, maxStamina);
-        OnStaminaChanged?.Invoke(StaminaPercent);
     }
 
     public void DrainStamina(float amount)

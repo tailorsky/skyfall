@@ -8,31 +8,29 @@ public class UIManager : MonoBehaviour
     [Header("Stamina UI")]
     [SerializeField] private Slider staminaSlider;
     [SerializeField] private Image staminaFill;
-    [SerializeField] private Color fullStaminaColor = Color.green;
-    [SerializeField] private Color lowStaminaColor = Color.red;
-    [SerializeField] private Color criticalStaminaColor = Color.red;
+    [SerializeField] private Color fullColor = Color.green;
+    [SerializeField] private Color lowColor = Color.yellow;
+    [SerializeField] private Color criticalColor = Color.red;
 
     [Header("Hand Indicators")]
     [SerializeField] private Image leftHandIndicator;
     [SerializeField] private Image rightHandIndicator;
     [SerializeField] private Color grippedColor = new Color(0f, 1f, 0f, 0.8f);
     [SerializeField] private Color releasedColor = new Color(1f, 0f, 0f, 0.4f);
-    [SerializeField] private Color reachingColor = new Color(1f, 1f, 0f, 0.8f);
 
-    [Header("Info Panels")]
+    [Header("Info")]
+    [SerializeField] private TextMeshProUGUI heightText;
+    [SerializeField] private TextMeshProUGUI staminaText;  // необязательно — цифры стамины
+
+    [Header("Panels")]
     [SerializeField] private GameObject gameOverPanel;
     [SerializeField] private GameObject winPanel;
-    [SerializeField] private TextMeshProUGUI heightText;
-    [SerializeField] private TextMeshProUGUI messageText;
+
+    [Header("Warning")]
+    [SerializeField] private TextMeshProUGUI warningText;
 
     [Header("Crosshair")]
     [SerializeField] private Image crosshair;
-    [SerializeField] private Color normalCrosshairColor = Color.white;
-    [SerializeField] private Color gripCrosshairColor = Color.green;
-
-    [Header("Warning Text")]
-    [SerializeField] private TextMeshProUGUI warningText;
-    [SerializeField] private float warningFlashSpeed = 2f;
 
     // Компоненты
     private StaminaSystem staminaSystem;
@@ -40,35 +38,67 @@ public class UIManager : MonoBehaviour
     private HandController leftHand;
     private HandController rightHand;
 
-    private bool showingWarning = false;
+    // Плавное изменение слайдера
+    private float displayedStamina = 1f;
+    private float targetStamina = 1f;
+
     private Coroutine warningCoroutine;
 
     private void Start()
     {
-        staminaSystem = FindObjectOfType<StaminaSystem>();
+        // ИЩЕМ ЧЕРЕЗ CLIMBINGMANAGER — ОН ТОЧНО НА PLAYER
         climbingManager = FindObjectOfType<ClimbingManager>();
 
-        HandController[] hands = FindObjectsOfType<HandController>();
-        foreach (var hand in hands)
+        if (climbingManager != null)
         {
-            if (hand.Side == HandController.HandSide.Left) leftHand = hand;
-            if (hand.Side == HandController.HandSide.Right) rightHand = hand;
+            staminaSystem = climbingManager.GetComponent<StaminaSystem>();
+            Debug.Log($"[UI] StaminaSystem найден на: {staminaSystem?.gameObject.name}");
         }
-
-        // Подписки
+        else
+        {
+            Debug.LogError("[UI] ClimbingManager не найден!");
+        }
+        // Находим компоненты
+        staminaSystem = FindObjectOfType<StaminaSystem>();
         if (staminaSystem != null)
         {
-            staminaSystem.OnStaminaChanged += UpdateStaminaUI;
-            staminaSystem.OnCriticalStamina += ShowCriticalWarning;
+            Debug.Log($"[UI] Нашёл StaminaSystem на объекте: {staminaSystem.gameObject.name}");
         }
 
+        HandController[] hands = FindObjectsOfType<HandController>();
+        foreach (var h in hands)
+        {
+            if (h.Side == HandController.HandSide.Left) leftHand = h;
+            if (h.Side == HandController.HandSide.Right) rightHand = h;
+        }
+
+        // Подписки на StaminaSystem
+        if (staminaSystem != null)
+        {
+            staminaSystem.OnStaminaChanged += OnStaminaChanged;
+            staminaSystem.OnCriticalStamina += OnCriticalStamina;
+            staminaSystem.OnStaminaExhausted += OnStaminaExhausted;
+
+            // Инициализируем слайдер сразу
+            targetStamina = staminaSystem.StaminaPercent;
+            displayedStamina = targetStamina;
+            ApplyStaminaToSlider(displayedStamina);
+
+            Debug.Log($"[UI] Стамина при старте: {targetStamina * 100:F0}%");
+        }
+        else
+        {
+            Debug.LogError("[UI] StaminaSystem НЕ НАЙДЕН!");
+        }
+
+        // Подписки на GameManager
         if (GameManager.Instance != null)
         {
             GameManager.Instance.OnGameOver += ShowGameOver;
             GameManager.Instance.OnWin += ShowWin;
         }
 
-        // Инициализация UI
+        // Прячем панели
         if (gameOverPanel != null) gameOverPanel.SetActive(false);
         if (winPanel != null) winPanel.SetActive(false);
         if (warningText != null) warningText.gameObject.SetActive(false);
@@ -76,75 +106,168 @@ public class UIManager : MonoBehaviour
 
     private void Update()
     {
+        // Читаем стамину НАПРЯМУЮ каждый кадр
+        if (staminaSystem != null)
+        {
+            float newTarget = staminaSystem.StaminaPercent;
+
+            // Логируем только когда меняется
+            if (Mathf.Abs(newTarget - targetStamina) > 0.01f)
+            {
+                Debug.Log($"[UI] Стамина изменилась: {newTarget * 100:F0}%");
+            }
+
+            targetStamina = newTarget;
+        }
+        else
+        {
+            // Пробуем найти снова
+            if (climbingManager != null)
+            {
+                staminaSystem = climbingManager.GetComponent<StaminaSystem>();
+            }
+        }
+
+        SmoothStaminaSlider();
         UpdateHandIndicators();
-        UpdateHeightDisplay();
+        UpdateHeightText();
         UpdateCrosshair();
     }
 
-    private void UpdateStaminaUI(float staminaPercent)
+    // ─── СТАМИНА ───
+
+    private void OnStaminaChanged(float percent)
     {
-        if (staminaSlider != null)
-        {
-            staminaSlider.value = staminaPercent;
-        }
+        targetStamina = percent;
+        Debug.Log($"[UI] Получили OnStaminaChanged: {percent * 100:F0}%");
+    }
 
-        if (staminaFill != null)
-        {
-            staminaFill.color = Color.Lerp(lowStaminaColor, fullStaminaColor, staminaPercent);
+    private void SmoothStaminaSlider()
+    {
+        // Плавно двигаем к цели
+        displayedStamina = Mathf.MoveTowards(
+            displayedStamina,
+            targetStamina,
+            Time.deltaTime * 2f
+        );
 
-            // Мигание при критическом уровне
-            if (staminaPercent < 0.25f)
+        ApplyStaminaToSlider(displayedStamina);
+
+        // ВРЕМЕННЫЙ ТЕСТ — каждые 60 кадров выводим всё
+        if (Time.frameCount % 60 == 0)
+        {
+            Debug.Log($"[SLIDER TEST] target={targetStamina:F2} displayed={displayedStamina:F2}");
+
+            if (staminaSlider != null)
             {
-                float pulse = Mathf.Abs(Mathf.Sin(Time.time * 4f));
-                staminaFill.color = Color.Lerp(criticalStaminaColor, Color.white, pulse * 0.3f);
+                Debug.Log($"[SLIDER TEST] slider.value={staminaSlider.value:F2} " +
+                          $"slider.minValue={staminaSlider.minValue} " +
+                          $"slider.maxValue={staminaSlider.maxValue}");
+            }
+            else
+            {
+                Debug.LogError("[SLIDER TEST] staminaSlider = NULL!");
             }
         }
     }
+
+    private void ApplyStaminaToSlider(float percent)
+    {
+        // Обновляем слайдер
+        if (staminaSlider != null)
+            staminaSlider.value = percent;
+
+        // Обновляем цвет
+        if (staminaFill != null)
+        {
+            Color c;
+            if (percent > 0.5f)
+                c = Color.Lerp(lowColor, fullColor, (percent - 0.5f) * 2f);
+            else
+                c = Color.Lerp(criticalColor, lowColor, percent * 2f);
+
+            // Мигание при критическом уровне
+            if (percent < 0.25f)
+            {
+                float pulse = Mathf.Abs(Mathf.Sin(Time.time * 5f));
+                c = Color.Lerp(c, Color.white, pulse * 0.4f);
+            }
+
+            staminaFill.color = c;
+        }
+
+        // Текст с цифрами (необязательно)
+        if (staminaText != null && staminaSystem != null)
+        {
+            staminaText.text = $"{staminaSystem.CurrentStamina:F0} / {staminaSystem.MaxStamina:F0}";
+        }
+    }
+
+    private void OnCriticalStamina()
+    {
+        ShowWarning("⚠ МАЛО СИЛ! ⚠");
+    }
+
+    private void OnStaminaExhausted()
+    {
+        ShowWarning("РУКИ УСТАЛИ!");
+    }
+
+    // ─── РУКИ ───
 
     private void UpdateHandIndicators()
     {
         if (leftHand != null && leftHandIndicator != null)
         {
-            leftHandIndicator.color = leftHand.IsGripped ? grippedColor :
-                                     leftHand.IsReaching ? reachingColor : releasedColor;
+            leftHandIndicator.color = leftHand.IsGripped ? grippedColor : releasedColor;
         }
 
         if (rightHand != null && rightHandIndicator != null)
         {
-            rightHandIndicator.color = rightHand.IsGripped ? grippedColor :
-                                      rightHand.IsReaching ? reachingColor : releasedColor;
+            rightHandIndicator.color = rightHand.IsGripped ? grippedColor : releasedColor;
         }
     }
 
-    private void UpdateHeightDisplay()
+    // ─── ВЫСОТА ───
+
+    private void UpdateHeightText()
     {
-        if (heightText != null && climbingManager != null)
+        if (heightText == null || climbingManager == null) return;
+
+        float h = climbingManager.transform.position.y;
+
+        if (GameManager.Instance != null)
         {
-            float height = climbingManager.transform.position.y;
-            float maxHeight = GameManager.Instance.WinHeight;
-            float percent = Mathf.Clamp01(height / maxHeight) * 100f;
-            heightText.text = $"Высота: {height:F1}м ({percent:F0}%)";
+            float maxH = GameManager.Instance.WinHeight;
+            float pct = Mathf.Clamp01(h / maxH) * 100f;
+            heightText.text = $"{h:F1}м ({pct:F0}%)";
+        }
+        else
+        {
+            heightText.text = $"{h:F1}м";
         }
     }
+
+    // ─── ПРИЦЕЛ ───
 
     private void UpdateCrosshair()
     {
         if (crosshair == null) return;
 
-        // Меняем цвет прицела при зацеплении
-        bool anyGripped = (leftHand != null && leftHand.IsGripped) ||
-                          (rightHand != null && rightHand.IsGripped);
+        bool gripped = (leftHand != null && leftHand.IsGripped) ||
+                       (rightHand != null && rightHand.IsGripped);
 
-        crosshair.color = anyGripped ? gripCrosshairColor : normalCrosshairColor;
+        crosshair.color = gripped ? Color.green : Color.white;
     }
 
-    private void ShowCriticalWarning()
+    // ─── ПРЕДУПРЕЖДЕНИЕ ───
+
+    public void ShowWarning(string message)
     {
         if (warningCoroutine != null)
-        {
             StopCoroutine(warningCoroutine);
-        }
-        warningCoroutine = StartCoroutine(FlashWarning("МАЛО СИЛ!"));
+
+        warningCoroutine = StartCoroutine(FlashWarning(message));
     }
 
     private IEnumerator FlashWarning(string message)
@@ -154,19 +277,19 @@ public class UIManager : MonoBehaviour
         warningText.text = message;
         warningText.gameObject.SetActive(true);
 
-        float duration = 3f;
-        float elapsed = 0f;
-
-        while (elapsed < duration)
+        float t = 0f;
+        while (t < 3f)
         {
-            float alpha = Mathf.Abs(Mathf.Sin(elapsed * warningFlashSpeed * Mathf.PI));
+            float alpha = Mathf.Abs(Mathf.Sin(t * 3f));
             warningText.color = new Color(1f, 0.2f, 0.2f, alpha);
-            elapsed += Time.deltaTime;
+            t += Time.deltaTime;
             yield return null;
         }
 
         warningText.gameObject.SetActive(false);
     }
+
+    // ─── ПАНЕЛИ ───
 
     private void ShowGameOver()
     {
@@ -176,36 +299,30 @@ public class UIManager : MonoBehaviour
     private IEnumerator ShowGameOverDelayed()
     {
         yield return new WaitForSeconds(1.5f);
-
-        if (gameOverPanel != null)
-        {
-            gameOverPanel.SetActive(true);
-        }
-
-        // Разблокируем курсор
-        FindObjectOfType<CameraController>()?.UnlockCursor();
+        if (gameOverPanel != null) gameOverPanel.SetActive(true);
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
     }
 
     private void ShowWin()
     {
-        if (winPanel != null)
-        {
-            winPanel.SetActive(true);
-        }
-        FindObjectOfType<CameraController>()?.UnlockCursor();
+        if (winPanel != null) winPanel.SetActive(true);
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
     }
 
     public void OnRestartButton()
     {
-        GameManager.Instance.RestartGame();
+        GameManager.Instance?.RestartGame();
     }
 
     private void OnDestroy()
     {
         if (staminaSystem != null)
         {
-            staminaSystem.OnStaminaChanged -= UpdateStaminaUI;
-            staminaSystem.OnCriticalStamina -= ShowCriticalWarning;
+            staminaSystem.OnStaminaChanged -= OnStaminaChanged;
+            staminaSystem.OnCriticalStamina -= OnCriticalStamina;
+            staminaSystem.OnStaminaExhausted -= OnStaminaExhausted;
         }
     }
 }
