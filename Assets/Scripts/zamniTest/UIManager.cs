@@ -25,6 +25,7 @@ public class UIManager : MonoBehaviour
     [Header("Panels")]
     [SerializeField] private GameObject gameOverPanel;
     [SerializeField] private GameObject winPanel;
+    [SerializeField] private GameObject tutorialPanel;
 
     [Header("Warning")]
     [SerializeField] private TextMeshProUGUI warningText;
@@ -101,6 +102,13 @@ public class UIManager : MonoBehaviour
         if (gameOverPanel != null) gameOverPanel.SetActive(false);
         if (winPanel != null) winPanel.SetActive(false);
         if (warningText != null) warningText.gameObject.SetActive(false);
+
+        if (tutorialPanel != null)
+        {
+            tutorialPanel.SetActive(true);
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
+        }
     }
 
     private void Update()
@@ -334,5 +342,13 @@ public class UIManager : MonoBehaviour
             staminaSystem.OnCriticalStamina -= OnCriticalStamina;
             staminaSystem.OnStaminaExhausted -= OnStaminaExhausted;
         }
+    }
+
+    public void CloseTutorial()
+    {
+        if (tutorialPanel != null)
+            tutorialPanel.SetActive(false);
+        Time.timeScale = 1f;
+        Cursor.visible = false;
     }
 }
