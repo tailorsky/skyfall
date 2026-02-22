@@ -12,5 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 0}
   m_Name: dia4
   m_EditorClassIdentifier: Assembly-CSharp::DialogueAsset
-  dialogueId: 
-  lines: []
+  dialogueId: dia4
+  lines:
+  - speakerId: net
+    text: I am not to blame for what happened! I am not to blame for what happened!
+      I am not to blame for what happened! I am not to blame for what happened! I
+      am not to blame for what happened!

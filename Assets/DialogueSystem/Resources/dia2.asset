@@ -12,5 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 0}
   m_Name: dia2
   m_EditorClassIdentifier: Assembly-CSharp::DialogueAsset
-  dialogueId: 
-  lines: []
+  dialogueId: dia2
+  lines:
+  - speakerId: net
+    text: A strange feeling haunts me. A feeling of something inevitable.

@@ -12,5 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 0}
   m_Name: dia1
   m_EditorClassIdentifier: Assembly-CSharp::DialogueAsset
-  dialogueId: 
-  lines: []
+  dialogueId: dia111
+  lines:
+  - speakerId: net1
+    text: I saw this place in my dreams. Is this where my journey ends?

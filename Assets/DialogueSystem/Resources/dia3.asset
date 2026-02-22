@@ -12,5 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 0}
   m_Name: dia3
   m_EditorClassIdentifier: Assembly-CSharp::DialogueAsset
-  dialogueId: 
-  lines: []
+  dialogueId: dia3
+  lines:
+  - speakerId: net
+    text: Where is this road leading me and should I follow it at all?
