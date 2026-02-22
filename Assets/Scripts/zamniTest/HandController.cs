@@ -12,7 +12,7 @@ public class HandController : MonoBehaviour
     [SerializeField] private LayerMask climbableLayer;
 
     [Header("Hand Position (������������ ������)")]
-    [SerializeField] private Vector3 restLocalPosition = new Vector3(0.3f, -0.3f, 0.6f);
+    [SerializeField] private Vector3 restLocalPosition = new Vector3(0.3f, -0.3f, 0.12f);
     [SerializeField] private float followSpeed = 15f;
     [SerializeField] private float returnSpeed = 8f;
 
@@ -47,11 +47,11 @@ public class HandController : MonoBehaviour
     {
         if (handSide == HandSide.Left)
         {
-            restLocalPosition = new Vector3(-0.4f, -0.3f, 0.6f);
+            restLocalPosition = new Vector3(-0.3f, -0.5f, -0.4f);
         }
         else
         {
-            restLocalPosition = new Vector3(0.4f, -0.3f, 0.6f);
+            restLocalPosition = new Vector3(0.3f, -0.5f, -0.4f);
         }
     }
 
