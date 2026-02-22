@@ -10,10 +10,9 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 0}
-  m_Name: Dialogue7
+  m_Name: d1
   m_EditorClassIdentifier: Assembly-CSharp::DialogueAsset
-  dialogueId: dia7
+  dialogueId: 1
   lines:
-  - speakerId: neutral
-    text: You wanted change, and you got it. Was it worth it? Will you continue to
-      want it? The choice is yours.
+  - speakerId: n
+    text: I saw this place in my dreams. Is this where my journey ends?

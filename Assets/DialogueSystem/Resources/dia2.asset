@@ -10,10 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 0}
-  m_Name: Dialogue4
+  m_Name: dia2
   m_EditorClassIdentifier: Assembly-CSharp::DialogueAsset
-  dialogueId: dia4
-  lines:
-  - speakerId: bad
-    text: Where does the line between good and bad, kind and evil, life and death
-      lie? Could it lie on the right ledge?
+  dialogueId: 
+  lines: []

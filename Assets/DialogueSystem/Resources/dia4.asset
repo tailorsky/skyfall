@@ -10,10 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 0}
-  m_Name: Dialogue6
+  m_Name: dia4
   m_EditorClassIdentifier: Assembly-CSharp::DialogueAsset
-  dialogueId: dia6
-  lines:
-  - speakerId: bad
-    text: You're to blame for everything that happened. You're to blame! You can
-      fix the situation if you grab the left ledge.
+  dialogueId: 
+  lines: []

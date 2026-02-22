@@ -10,11 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 0}
-  m_Name: Dialogue5
+  m_Name: dia1
   m_EditorClassIdentifier: Assembly-CSharp::DialogueAsset
-  dialogueId: dia5
-  lines:
-  - speakerId: good
-    text: 'You should trust me and grab the right ledge.
-
-'
+  dialogueId: 
+  lines: []
