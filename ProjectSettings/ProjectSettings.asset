@@ -16,9 +16,9 @@ PlayerSettings:
   productName: skyfall
   defaultCursor: {fileID: 0}
   cursorHotspot: {x: 0, y: 0}
-  m_SplashScreenBackgroundColor: {r: 0, g: 0, b: 0, a: 1}
+  m_SplashScreenBackgroundColor: {r: 0, g: 0.027746947, b: 0.09433961, a: 1}
   m_ShowUnitySplashScreen: 1
-  m_ShowUnitySplashLogo: 1
+  m_ShowUnitySplashLogo: 0
   m_SplashScreenOverlayOpacity: 1
   m_SplashScreenAnimation: 1
   m_SplashScreenLogoStyle: 1
@@ -40,9 +40,9 @@ PlayerSettings:
     width: 1
     height: 1
   m_SplashScreenLogos:
-  - logo: {fileID: -1523726097, guid: 75849334751b35547a66506d0b1c0c92, type: 3}
+  - logo: {fileID: -721580970, guid: 9851b174cea2e5c4e92c2631d8ecf847, type: 3}
     duration: 2
-  m_VirtualRealitySplashScreen: {fileID: 2800000, guid: 75849334751b35547a66506d0b1c0c92, type: 3}
+  m_VirtualRealitySplashScreen: {fileID: 2800000, guid: 9851b174cea2e5c4e92c2631d8ecf847, type: 3}
   m_HolographicTrackingLossScreen: {fileID: 0}
   defaultScreenWidth: 1024
   defaultScreenHeight: 768
