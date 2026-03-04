@@ -167,21 +167,21 @@ public class UIManager : MonoBehaviour
         ApplyStaminaToSlider(displayedStamina);
 
         // ВРЕМЕННЫЙ ТЕСТ — каждые 60 кадров выводим всё
-        if (Time.frameCount % 60 == 0)
-        {
-            Debug.Log($"[SLIDER TEST] target={targetStamina:F2} displayed={displayedStamina:F2}");
+        // if (Time.frameCount % 60 == 0)
+        // {
+        //     Debug.Log($"[SLIDER TEST] target={targetStamina:F2} displayed={displayedStamina:F2}");
 
-            if (staminaSlider != null)
-            {
-                Debug.Log($"[SLIDER TEST] slider.value={staminaSlider.value:F2} " +
-                          $"slider.minValue={staminaSlider.minValue} " +
-                          $"slider.maxValue={staminaSlider.maxValue}");
-            }
-            else
-            {
-                Debug.LogError("[SLIDER TEST] staminaSlider = NULL!");
-            }
-        }
+        //     if (staminaSlider != null)
+        //     {
+        //         Debug.Log($"[SLIDER TEST] slider.value={staminaSlider.value:F2} " +
+        //                   $"slider.minValue={staminaSlider.minValue} " +
+        //                   $"slider.maxValue={staminaSlider.maxValue}");
+        //     }
+        //     else
+        //     {
+        //         Debug.LogError("[SLIDER TEST] staminaSlider = NULL!");
+        //     }
+        // }
     }
 
     private void ApplyStaminaToSlider(float percent)
