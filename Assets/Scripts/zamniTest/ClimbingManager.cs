@@ -133,12 +133,15 @@ public class ClimbingManager : MonoBehaviour
         climbing.ReleaseAll();
         playerWalking.ResetVelocity();
         stateManager.ForceState(PlayerStateManager.PlayerState.Mantling);
+        GetComponent<StaminaSystem>()?.SetHandsGripped(0, false);
+        FindObjectOfType<CameraController>()?.SetFrozen(true);
     }
 
     private void OnMantleFinished()
     {
         stateManager.ForceState(PlayerStateManager.PlayerState.Walking);
         playerWalking.ResetVelocity();
+        FindObjectOfType<CameraController>()?.SetFrozen(false);
     }
 
     // ── Вспомогательные ──────────────────────────────────────

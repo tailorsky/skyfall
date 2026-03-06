@@ -179,12 +179,16 @@ public class ClimbingController : MonoBehaviour
 
         if (Mathf.Abs(h) < 0.1f && Mathf.Abs(v) < 0.1f) return;
 
-        // Нельзя подняться выше maxClimbDistance от точки захвата
+        // Нельзя удалиться дальше maxClimbDistance от точки захвата в любую сторону
         float distFromGrip = Vector3.Distance(transform.position, GetHighestGripPoint());
-        if (v > 0f && distFromGrip >= maxClimbDistance)
-            v = 0f;
-
-        if (Mathf.Abs(h) < 0.1f && Mathf.Abs(v) < 0.1f) return;
+        if (distFromGrip >= maxClimbDistance)
+        {
+            // Разрешаем только движение ОБРАТНО к точке захвата
+            Vector3 toGrip   = (GetHighestGripPoint() - transform.position).normalized;
+            Vector3 limitRight = transform.right; limitRight.y = 0f; limitRight.Normalize();
+            Vector3 inputDir = (limitRight * h + Vector3.up * v).normalized;
+            if (Vector3.Dot(inputDir, toGrip) < 0f) return;
+        }
 
         Vector3 right   = transform.right; right.y = 0f; right.Normalize();
         Vector3 moveDir = (right * h + Vector3.up * v).normalized;

@@ -31,8 +31,12 @@ public class PlayerWalking : MonoBehaviour
     private float   lastJumpTime = -10f;
     private float   currentSpeed;
 
-    public bool  IsGrounded => cc.isGrounded;
-    public float Gravity    => gravity;
+    public bool  IsGrounded  => cc.isGrounded;
+    public float Gravity     => gravity;
+    public bool  IsSprinting => isSprinting;
+    public bool  IsMoving    => new Vector2(velocity.x, velocity.z).magnitude > 0.1f;
+
+    private bool isSprinting = false;
 
     private void Awake()
     {
@@ -98,6 +102,7 @@ public class PlayerWalking : MonoBehaviour
             currentSpeed = walkSpeed;
         }
 
+        isSprinting = wantsSprint;
         staminaSystem?.SetSprinting(wantsSprint);
     }
 

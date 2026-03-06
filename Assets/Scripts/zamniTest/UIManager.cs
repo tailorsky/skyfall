@@ -15,8 +15,8 @@ public class UIManager : MonoBehaviour
     [Header("Hand Indicators")]
     [SerializeField] private Image leftHandIndicator;
     [SerializeField] private Image rightHandIndicator;
-    [SerializeField] private Color grippedColor = new Color(0f, 1f, 0f, 0.8f);
-    [SerializeField] private Color releasedColor = new Color(1f, 0f, 0f, 0.4f);
+    [SerializeField] private Sprite grippedSprite;   // спрайт сжатой руки
+    [SerializeField] private Sprite releasedSprite;  // спрайт разжатой руки
 
     [Header("Info")]
     [SerializeField] private TextMeshProUGUI heightText;
@@ -47,6 +47,10 @@ public class UIManager : MonoBehaviour
 
     private void Start()
     {
+        if (rightHandIndicator != null)
+        {
+            rightHandIndicator.transform.localScale = new Vector3(-1f, 1f, 1f);
+        }
         // ИЩЕМ ЧЕРЕЗ CLIMBINGMANAGER — ОН ТОЧНО НА PLAYER
         climbingManager = FindObjectOfType<ClimbingManager>();
 
@@ -248,12 +252,12 @@ public class UIManager : MonoBehaviour
     {
         if (leftHand != null && leftHandIndicator != null)
         {
-            leftHandIndicator.color = leftHand.IsGripped ? grippedColor : releasedColor;
+            leftHandIndicator.sprite = leftHand.IsGripped ? grippedSprite : releasedSprite;
         }
 
         if (rightHand != null && rightHandIndicator != null)
         {
-            rightHandIndicator.color = rightHand.IsGripped ? grippedColor : releasedColor;
+            rightHandIndicator.sprite = rightHand.IsGripped ? grippedSprite : releasedSprite;
         }
     }
 

@@ -2,143 +2,234 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 
 /// <summary>
-/// Отвечает за обнаружение и выполнение мантла (перелезания через край).
+/// Мантл через CharacterController — без телепортации, уважает коллайдеры.
+/// Фазы: 0 — подтянуться вверх, 1 — выдвинуться вперёд, 2 — встать.
+/// Отмена: S или Escape. Таймаут если застрял.
 /// </summary>
 [RequireComponent(typeof(CharacterController))]
 public class MantleController : MonoBehaviour
 {
-    [Header("Mantle Settings")]
-    [SerializeField] private float     mantleCheckDistance  = 1.0f;
-    [SerializeField] private float     mantleCheckHeight    = 1.5f;
-    [SerializeField] private float     mantleSpeed          = 3f;
-    [SerializeField] private float     mantleUpOffset       = 0.5f;
-    [SerializeField] private float     minHorizontalAngle   = 0.7f;
-    [SerializeField] private LayerMask mantleSurfaceLayer;
+    [Header("Detection")]
+    [SerializeField] private float checkDistance   = 0.8f;
+    [SerializeField] private float checkHeight     = 1.5f;
+    [SerializeField] private float minSurfaceAngle = 0.7f;
+    [SerializeField] private LayerMask surfaceLayer;
+
+    [Header("Movement")]
+    [SerializeField] private float upSpeed      = 6f;
+    [SerializeField] private float forwardSpeed = 4f;
+    [SerializeField] private float upOffset     = 0.2f;
+
+    [Header("Safety")]
+    [SerializeField] private float mantleTimeout  = 2f;   // максимальное время на мантл
+    [SerializeField] private float stuckThreshold = 0.02f; // если за кадр двигаемся меньше — застряли
+    [SerializeField] private float stuckTime      = 0.5f;  // сколько секунд стоим прежде чем отменить
 
     [Header("Debug")]
-    [SerializeField] private bool showMantleDebug = true;
+    [SerializeField] private bool showDebug = false;
 
-    // ── публичное состояние ───────────────────────────────────
+    // ── Публичное состояние ───────────────────────────────────
     public bool CanMantle  => canMantle;
     public bool IsMantling => isMantling;
 
-    // ── события ──────────────────────────────────────────────
     public event System.Action OnMantleStarted;
     public event System.Action OnMantleFinished;
+    public event System.Action OnMantieCancelled;
 
-    // ── приватное ────────────────────────────────────────────
+    // ── Приватное ─────────────────────────────────────────────
     private CharacterController cc;
 
-    private bool    canMantle          = false;
-    private bool    isMantling         = false;
-    private Vector3 mantleTargetPosition;
-    private Vector3 mantleEdgePosition;
-    private int     mantlePhase        = 0;
+    private bool    canMantle  = false;
+    private bool    isMantling = false;
+    private int     phase      = 0;
+
+    private Vector3 edgePoint;
+    private Vector3 targetTop;
+    private Vector3 forwardDir;
+
+    // Безопасность
+    private float   mantleTimer    = 0f;
+    private float   stuckTimer     = 0f;
+    private Vector3 lastPosition;
 
     private void Awake() => cc = GetComponent<CharacterController>();
 
     private void Start()
     {
-        if (mantleSurfaceLayer == 0)
-            mantleSurfaceLayer = ~(1 << gameObject.layer);
+        if (surfaceLayer == 0)
+            surfaceLayer = ~(1 << gameObject.layer);
     }
 
     // ── Вызывается из ClimbingManager ────────────────────────
 
-    /// <summary>Проверяет возможность мантла. Передать высшую точку захвата и направление вперёд.</summary>
     public void CheckPossibility(Vector3 gripPoint, Vector3 climbForward)
     {
-        canMantle = false;
+        canMantle  = false;
+        forwardDir = climbForward;
 
-        Vector3 checkStart = gripPoint + Vector3.up * mantleCheckHeight + climbForward * mantleCheckDistance;
+        Vector3 checkOrigin = gripPoint + Vector3.up * checkHeight + climbForward * checkDistance;
 
         RaycastHit hitDown;
-        bool hasTopSurface = Physics.Raycast(
-            checkStart, Vector3.down, out hitDown,
-            mantleCheckHeight + 1f, mantleSurfaceLayer, QueryTriggerInteraction.Ignore
+        bool hasSurface = Physics.Raycast(
+            checkOrigin, Vector3.down, out hitDown,
+            checkHeight + 1f, surfaceLayer, QueryTriggerInteraction.Ignore
         );
 
-        if (showMantleDebug)
-            Debug.DrawRay(checkStart, Vector3.down * (mantleCheckHeight + 1f),
-                hasTopSurface ? Color.green : Color.red);
+        if (showDebug)
+            Debug.DrawRay(checkOrigin, Vector3.down * (checkHeight + 1f),
+                hasSurface ? Color.green : Color.red);
 
-        if (!hasTopSurface || hitDown.normal.y < minHorizontalAngle) return;
+        if (!hasSurface || hitDown.normal.y < minSurfaceAngle) return;
 
-        Vector3 targetPos    = hitDown.point + Vector3.up * mantleUpOffset;
-        float   playerRadius = cc.radius;
-        float   playerHeight = cc.height;
+        Vector3 standPos = hitDown.point + Vector3.up * upOffset;
 
         bool hasSpace = !Physics.CheckCapsule(
-            targetPos + Vector3.up * playerRadius,
-            targetPos + Vector3.up * (playerHeight - playerRadius),
-            playerRadius * 0.9f, mantleSurfaceLayer, QueryTriggerInteraction.Ignore
+            standPos + Vector3.up * cc.radius,
+            standPos + Vector3.up * (cc.height - cc.radius),
+            cc.radius * 0.9f,
+            surfaceLayer,
+            QueryTriggerInteraction.Ignore
         );
 
         if (!hasSpace) return;
 
-        canMantle          = true;
-        mantleEdgePosition  = gripPoint + Vector3.up * 0.3f;
-        mantleTargetPosition = targetPos;
+        canMantle = true;
+        edgePoint = hitDown.point;
+        targetTop = standPos;
 
-        if (showMantleDebug)
+        if (showDebug)
         {
-            Debug.DrawLine(transform.position, mantleEdgePosition, Color.yellow);
-            Debug.DrawLine(mantleEdgePosition, mantleTargetPosition, Color.cyan);
+            Debug.DrawLine(transform.position, edgePoint, Color.yellow);
+            Debug.DrawLine(edgePoint, targetTop, Color.cyan);
         }
     }
 
-    /// <summary>Читает ввод и начинает мантл если возможно.</summary>
     public void HandleInput()
     {
-        if (!canMantle || isMantling) return;
+        if (isMantling)
+        {
+            // Отмена мантла по S или Escape
+            var kb = Keyboard.current;
+            if (kb != null &&
+                kb.sKey.wasPressedThisFrame)
+            {
+                CancelMantle();
+                return;
+            }
+            return;
+        }
 
-        var kb = Keyboard.current;
-        if (kb == null) return;
+        if (!canMantle) return;
 
-        if (kb.spaceKey.wasPressedThisFrame || kb.wKey.wasPressedThisFrame)
+        var keyboard = Keyboard.current;
+        if (keyboard == null) return;
+
+        if (keyboard.spaceKey.wasPressedThisFrame)
             StartMantle();
     }
 
-    /// <summary>Тик выполнения мантла. Вызывать только пока IsMantling == true.</summary>
     public void Tick()
     {
-        float step = mantleSpeed * Time.deltaTime;
+        if (!isMantling) return;
 
-        switch (mantlePhase)
+        // ── Таймаут ───────────────────────────────────────────
+        mantleTimer += Time.deltaTime;
+        if (mantleTimer >= mantleTimeout)
         {
-            case 0:
-                Vector3 edgeTarget = new Vector3(transform.position.x, mantleEdgePosition.y, transform.position.z);
-                transform.position = Vector3.MoveTowards(transform.position, edgeTarget, step);
-                if (Vector3.Distance(transform.position, edgeTarget) < 0.05f)
-                    mantlePhase = 1;
-                break;
+            Debug.LogWarning("[Mantle] Таймаут — отменяем");
+            CancelMantle();
+            return;
+        }
 
-            case 1:
-                transform.position = Vector3.MoveTowards(transform.position, mantleTargetPosition, step);
-                if (Vector3.Distance(transform.position, mantleTargetPosition) < 0.05f)
-                    FinishMantle();
+        // ── Проверка застревания ──────────────────────────────
+        float moved = Vector3.Distance(transform.position, lastPosition);
+        if (moved < stuckThreshold)
+        {
+            stuckTimer += Time.deltaTime;
+            if (stuckTimer >= stuckTime)
+            {
+                Debug.LogWarning("[Mantle] Застрял — отменяем");
+                CancelMantle();
+                return;
+            }
+        }
+        else
+        {
+            stuckTimer = 0f;
+        }
+        lastPosition = transform.position;
+
+        // ── Фазы ─────────────────────────────────────────────
+        switch (phase)
+        {
+            case 0: // Подтягиваемся вверх
+            {
+                float targetY = edgePoint.y + upOffset;
+                float deltaY  = targetY - transform.position.y;
+                float stepY   = upSpeed * Time.deltaTime;
+
+                cc.Move(Vector3.up * Mathf.Min(deltaY, stepY));
+
+                if (transform.position.y >= targetY - 0.05f)
+                    phase = 1;
                 break;
+            }
+
+            case 1: // Выдвигаемся вперёд
+            {
+                Vector3 flatTarget = new Vector3(targetTop.x, transform.position.y, targetTop.z);
+                Vector3 dir        = flatTarget - transform.position;
+
+                if (dir.magnitude < 0.05f) { phase = 2; break; }
+
+                cc.Move(dir.normalized * forwardSpeed * Time.deltaTime);
+                break;
+            }
+
+            case 2: // Опускаемся на поверхность
+            {
+                float deltaY = targetTop.y - transform.position.y;
+
+                if (Mathf.Abs(deltaY) < 0.05f || cc.isGrounded)
+                {
+                    FinishMantle();
+                    break;
+                }
+
+                cc.Move(Vector3.down * forwardSpeed * Time.deltaTime);
+                break;
+            }
         }
     }
 
     // ── Приватные ─────────────────────────────────────────────
+
     private void StartMantle()
     {
         isMantling   = true;
-        mantlePhase  = 0;
+        phase        = 0;
+        mantleTimer  = 0f;
+        stuckTimer   = 0f;
+        lastPosition = transform.position;
         OnMantleStarted?.Invoke();
     }
 
     private void FinishMantle()
     {
-        isMantling  = false;
-        canMantle   = false;
-        mantlePhase = 0;
-
-        cc.enabled         = false;
-        transform.position = mantleTargetPosition;
-        cc.enabled         = true;
-
+        isMantling = false;
+        canMantle  = false;
+        phase      = 0;
         OnMantleFinished?.Invoke();
+    }
+
+    private void CancelMantle()
+    {
+        isMantling = false;
+        canMantle  = false;
+        phase      = 0;
+        mantleTimer = 0f;
+        stuckTimer  = 0f;
+        OnMantieCancelled?.Invoke();
+        if (showDebug) Debug.Log("[Mantle] Отменён");
     }
 }
